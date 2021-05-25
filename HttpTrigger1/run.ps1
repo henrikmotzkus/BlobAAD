@@ -17,7 +17,6 @@ if ($file) {
     $saname = $env:APPSETTING_saname
     $containername = $env:APPSETTING_containername
     $key = $env:APPSETTING_sakey
-    Write-Host $key    
     $ctx = New-AzStorageContext -StorageAccountName $saname -StorageAccountKey $key
     
 
