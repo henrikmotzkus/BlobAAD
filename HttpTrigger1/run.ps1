@@ -14,9 +14,9 @@ if (-not $file) {
 
 if ($file) {
 
-    $saname = Get-ChildItem env:APPSETTING_saname
-    $containername = Get-ChildItem env:APPSETTING_containername
-    $key = Get-ChildItem env:APPSETTING_sakey
+    $saname = $env:APPSETTING_saname
+    $containername = $env:APPSETTING_containername
+    $key = $env:APPSETTING_sakey
     Write-Host $key    
     $ctx = New-AzStorageContext -StorageAccountName $saname -StorageAccountKey $key
     
