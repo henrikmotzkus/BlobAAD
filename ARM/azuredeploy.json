@@ -1,0 +1,137 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "repoURL": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            }
+     },
+        "branch": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            }
+        }
+    },
+    "functions": [],
+    "variables": {
+        "saname": "[uniqueString(resourceGroup().name)]",
+        "sfname": "[uniqueString(resourceGroup().name)]",
+        "functionAppName": "[uniqueString(resourceGroup().name)]",
+        "containername":"protected"
+        
+    },
+    "resources":[
+        {
+        "name": "[variables('saname')]",
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "2019-06-01",
+        "tags": {
+            "displayName": "[variables('saname')]"
+            },
+            "location": "[resourceGroup().location]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "resources": [
+                {
+                "type": "blobServices/containers",
+                "apiVersion": "2019-06-01",
+                "name": "[concat('default/', variables('containername'))]",
+                "dependsOn": [
+                    "[variables('saname')]"
+                ]
+                }
+      ]
+        },
+        {
+            "name": "[variables('sfname')]",
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name":"Y1",
+                "tier":"Dynamic",
+                "size":"Y1",
+                "family":"Y",
+                "capacity":0
+            },
+            "tags": {
+                "displayName": "[variables('sfname')]"
+            },
+            "properties": {
+                "name": "[variables('sfname')]"
+            }
+        },
+        {
+            "name": "[variables('functionAppName')]",
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "location": "[resourceGroup().location]",
+            "kind": "functionapp",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('sfname'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('saname'))]"
+            ],
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('sfname'))]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('saname'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('saname')),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('saname'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('saname')),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('saname'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('saname')),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~3"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "powershell"
+                        },
+                        {
+                            "name": "saname",
+                            "value": "[variables('saname')]"
+                        },
+                        {
+                            "name":"containername",
+                            "value":"[variables('containername')]"
+                        },
+                        {
+                            "name":"sakey",
+                            "value":"[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('saname')),'2015-05-01-preview').key1]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "apiVersion": "2018-11-01",
+                    "name": "web",
+                    "type": "sourcecontrols",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', variables('functionAppName'))]"
+                    ],
+                    "properties": {
+                        "RepoUrl": "[parameters('repoURL')]",
+                        "branch": "[parameters('branch')]",
+                        "IsManualIntegration": true
+                    }
+                }
+            ]
+        }
+    ],
+    "outputs": {}
+}
