@@ -24,7 +24,7 @@ try{
         $ctx = New-AzStorageContext -StorageAccountName $saname -StorageAccountKey $key
 
         # Check if blob exists
-        $blob = Get-AzureStorageBlob -Blob $file -Container $containername -Context $ctx -ErrorAction Stop
+        $blob = Get-AzStorageBlob -Blob $file -Container $containername -Context $ctx -ErrorAction Stop
 
         # Creating the SAS token
         $StartTime = Get-Date
